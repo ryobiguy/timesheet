@@ -5,7 +5,13 @@ dotenv.config()
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.coerce.number().default(5001),
+  PORT: z.preprocess((value) => {
+    const num = typeof value === 'string' ? Number(value) : value
+    if (typeof num !== 'number' || Number.isNaN(num) || num <= 0) {
+      return undefined
+    }
+    return num
+  }, z.number().int().positive().default(5001)),
   DATABASE_URL: z.string().optional(), // Optional for SQLite
   JWT_SECRET: z.string().default('your-secret-key-change-in-production'),
   FRONTEND_URL: z.string().url().optional(),
