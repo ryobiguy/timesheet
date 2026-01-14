@@ -53,7 +53,7 @@ export function RegisterPage() {
       <div className="w-full max-w-md space-y-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-lg">
         <div className="text-center">
           <h2 className="text-3xl font-semibold text-slate-900">Create account</h2>
-          <p className="mt-2 text-sm text-slate-600">Timesheet Control - GeoFence Workforce</p>
+          <p className="mt-2 text-sm text-slate-600">Clockly - Geofence Workforce</p>
         </div>
 
         {error && (

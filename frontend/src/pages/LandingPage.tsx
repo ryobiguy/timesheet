@@ -9,7 +9,7 @@ export function LandingPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-sky-500"></div>
-              <span className="text-xl font-bold text-slate-900">Timesheet Control</span>
+              <span className="text-xl font-bold text-slate-900">Clockly</span>
             </div>
             <div className="hidden md:flex items-center gap-6">
               <a href="#features" className="text-slate-600 hover:text-slate-900 transition">Features</a>
@@ -32,7 +32,7 @@ export function LandingPage() {
           <div className="mx-auto max-w-2xl text-center">
             <h1 className="text-5xl font-bold tracking-tight text-slate-900 sm:text-6xl">
               Geofence Workforce
-              <span className="block text-sky-500">Timesheet Management</span>
+              <span className="block text-sky-500">Time Tracking</span>
             </h1>
             <p className="mt-6 text-lg leading-8 text-slate-600">
               Automate time tracking with GPS geofencing. Know exactly when your workers arrive and leave job sites. 
@@ -150,7 +150,7 @@ export function LandingPage() {
             Ready to get started?
           </h2>
           <p className="mt-4 text-lg text-slate-600">
-            Join hundreds of companies already using Timesheet Control
+            Join hundreds of companies already using Clockly
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <Link
@@ -176,7 +176,7 @@ export function LandingPage() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="h-8 w-8 rounded-lg bg-sky-500"></div>
-                <span className="text-xl font-bold text-slate-900">Timesheet Control</span>
+                <span className="text-xl font-bold text-slate-900">Clockly</span>
               </div>
               <p className="text-sm text-slate-600">
                 Automated workforce timesheet management with geofencing technology.
@@ -208,7 +208,7 @@ export function LandingPage() {
             </div>
           </div>
           <div className="mt-12 border-t border-slate-200 pt-8 text-center text-sm text-slate-600">
-            <p>&copy; {new Date().getFullYear()} Timesheet Control. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Clockly. All rights reserved.</p>
           </div>
         </div>
       </footer>

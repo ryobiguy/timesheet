@@ -58,7 +58,7 @@ export function CompanySignupPage() {
         <div className="mb-8 text-center">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
             <div className="h-8 w-8 rounded-lg bg-sky-500"></div>
-            <span className="text-xl font-bold text-slate-900">Timesheet Control</span>
+            <span className="text-xl font-bold text-slate-900">Clockly</span>
           </Link>
           <h2 className="text-3xl font-semibold text-slate-900">Create Your Company Account</h2>
           <p className="mt-2 text-slate-600">Get started with a free trial. No credit card required.</p>

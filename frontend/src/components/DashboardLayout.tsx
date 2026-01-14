@@ -56,8 +56,8 @@ export function DashboardLayout() {
               </svg>
             </button>
             <div>
-              <p className="text-xs sm:text-sm uppercase tracking-widest text-sky-500">Timesheet Control</p>
-              <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">GeoFence Workforce</h1>
+              <p className="text-xs sm:text-sm uppercase tracking-widest text-sky-500">Clockly</p>
+              <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">Geofence Workforce</h1>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
