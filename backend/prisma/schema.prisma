@@ -1,0 +1,153 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:dev.db"
+}
+
+model Organization {
+  id                 String   @id @default(cuid())
+  name               String
+  subscriptionTier   String   @default("free")
+  stripeCustomerId   String?
+  stripeSubscriptionId String?
+  subscriptionStatus String?  // active | past_due | canceled | trialing | unpaid
+  createdAt          String   @default(cuid()) // SQLite workaround for DateTime
+  updatedAt          String   @default(cuid())
+
+  users     User[]
+  jobsites  Jobsite[]
+  summaries TimesheetSummary[]
+
+  @@map("organizations")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         String    @default("WORKER") // ADMIN | SUPERVISOR | WORKER
+  orgId        String
+  createdAt    String    @default(cuid())
+  updatedAt    String    @default(cuid())
+
+  org          Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  assignments  Assignment[]
+  events       GeofenceEvent[]
+  entries      TimeEntry[]
+  summaries    TimesheetSummary[]
+  raisedDisputes Dispute[] @relation("DisputeRaisedBy")
+
+  @@map("users")
+}
+
+model Jobsite {
+  id          String   @id @default(cuid())
+  name        String
+  address     String
+  latitude    Float
+  longitude   Float
+  radiusMeters Int      @default(150)
+  orgId       String
+  createdAt   String   @default(cuid())
+  updatedAt   String   @default(cuid())
+
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  assignments Assignment[]
+  events      GeofenceEvent[]
+  entries     TimeEntry[]
+
+  @@map("jobsites")
+}
+
+model Assignment {
+  id           String   @id @default(cuid())
+  workerId     String
+  jobsiteId    String
+  scheduleDays String   @default("[]") // JSON string array
+  createdAt    String   @default(cuid())
+  updatedAt    String   @default(cuid())
+
+  worker  User     @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  jobsite Jobsite  @relation(fields: [jobsiteId], references: [id], onDelete: Cascade)
+
+  @@unique([workerId, jobsiteId])
+  @@map("assignments")
+}
+
+model GeofenceEvent {
+  id        String      @id @default(cuid())
+  workerId  String
+  jobsiteId String
+  type      String      @default("ENTER") // ENTER | EXIT
+  timestamp String      @default(cuid()) // ISO string
+  accuracy  Float?
+  source    String      @default("device")
+  createdAt String      @default(cuid())
+
+  worker  User    @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  jobsite Jobsite @relation(fields: [jobsiteId], references: [id], onDelete: Cascade)
+
+  @@map("geofence_events")
+}
+
+model TimeEntry {
+  id                String     @id @default(cuid())
+  workerId          String
+  jobsiteId         String
+  startAt           String
+  endAt             String?
+  durationMinutes   Int?
+  status            String     @default("PENDING") // PENDING | APPROVED | DISPUTED
+  createdFromEvents String     @default("[]") // JSON string array
+  modifiedBy        String?
+  createdAt         String     @default(cuid())
+  updatedAt         String     @default(cuid())
+
+  worker   User     @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  jobsite  Jobsite  @relation(fields: [jobsiteId], references: [id], onDelete: Cascade)
+  disputes Dispute[]
+
+  @@map("time_entries")
+}
+
+model Dispute {
+  id           String   @id @default(cuid())
+  timeEntryId  String
+  raisedBy     String
+  reason       String
+  resolution   String?
+  resolvedBy   String?
+  resolvedAt   String?
+  createdAt    String   @default(cuid())
+  updatedAt    String   @default(cuid())
+
+  timeEntry TimeEntry @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+  raisedByUser User @relation("DisputeRaisedBy", fields: [raisedBy], references: [id], onDelete: Cascade)
+
+  @@map("disputes")
+}
+
+model TimesheetSummary {
+  id            String   @id @default(cuid())
+  workerId      String
+  orgId         String
+  weekStart     String
+  totalRegular  Int      @default(0)
+  totalOvertime Int      @default(0)
+  approvalState String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  createdAt     String   @default(cuid())
+  updatedAt     String   @default(cuid())
+
+  worker User         @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  org    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([workerId, weekStart])
+  @@map("timesheet_summaries")
+}

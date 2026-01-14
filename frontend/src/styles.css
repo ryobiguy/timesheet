@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-slate-200;
+  }
+  
+  body {
+    @apply bg-white text-slate-900 antialiased;
+  }
+  
+  /* Prevent body scroll when mobile sidebar is open */
+  body.sidebar-open {
+    overflow: hidden;
+  }
+}
+
+@layer utilities {
+  /* Ensure proper mobile touch targets */
+  @media (max-width: 1024px) {
+    button, a {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+}

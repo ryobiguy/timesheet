@@ -1,0 +1,20 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dependencies first (for better caching)
+COPY package*.json ./
+RUN npm install
+
+# Copy Prisma schema and generate client
+COPY prisma ./prisma/
+RUN npx prisma generate
+
+# Copy everything else
+COPY . .
+
+# Expose port
+EXPOSE 5001
+
+# Use tsx for hot reload
+CMD ["npm", "run", "dev"]
