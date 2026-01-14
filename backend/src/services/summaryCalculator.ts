@@ -96,7 +96,8 @@ export async function calculateWeeklySummary(
       weekStart: startStr,
       totalRegular,
       totalOvertime,
-      approvalState: 'PENDING'
+      approvalState: 'PENDING',
+      orgId: worker.orgId
     },
     include: {
       worker: {

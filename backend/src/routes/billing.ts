@@ -171,8 +171,8 @@ router.get('/status', requireAuth, async (req: AuthRequest, res: Response) => {
           ? {
               id: subscription.id,
               status: subscription.status,
-              currentPeriodEnd: subscription.currentPeriodEnd,
-              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+              currentPeriodEnd: subscription.current_period_end,
+              cancelAtPeriodEnd: subscription.cancel_at_period_end,
               items: subscription.items.data.map((item) => ({
                 priceId: item.price.id,
                 quantity: item.quantity,
@@ -317,8 +317,16 @@ router.post(
 
         case 'invoice.payment_succeeded': {
           const invoice = event.data.object as Stripe.Invoice
-          if (invoice.subscription && typeof invoice.subscription === 'string') {
-            const subscription = await stripe.subscriptions.retrieve(invoice.subscription)
+          const invoiceSubscription =
+            (invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription | null })
+              .subscription
+          const subscriptionId =
+            typeof invoiceSubscription === 'string'
+              ? invoiceSubscription
+              : invoiceSubscription?.id
+
+          if (subscriptionId) {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId)
             const org = await prisma.organization.findFirst({
               where: { stripeSubscriptionId: subscription.id },
             })
@@ -337,8 +345,16 @@ router.post(
 
         case 'invoice.payment_failed': {
           const invoice = event.data.object as Stripe.Invoice
-          if (invoice.subscription && typeof invoice.subscription === 'string') {
-            const subscription = await stripe.subscriptions.retrieve(invoice.subscription)
+          const invoiceSubscription =
+            (invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription | null })
+              .subscription
+          const subscriptionId =
+            typeof invoiceSubscription === 'string'
+              ? invoiceSubscription
+              : invoiceSubscription?.id
+
+          if (subscriptionId) {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId)
             const org = await prisma.organization.findFirst({
               where: { stripeSubscriptionId: subscription.id },
             })

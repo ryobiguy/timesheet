@@ -7,6 +7,7 @@ export interface AuthRequest extends Request {
     id: string
     email: string
     role: string
+    orgId: string
   }
 }
 
@@ -33,7 +34,7 @@ export async function requireAuth(
     // Verify user still exists
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, email: true, role: true }
+      select: { id: true, email: true, role: true, orgId: true }
     })
 
     if (!user) {
@@ -44,7 +45,8 @@ export async function requireAuth(
     req.user = {
       id: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      orgId: user.orgId
     }
 
     next()

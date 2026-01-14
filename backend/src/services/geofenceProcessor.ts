@@ -32,10 +32,7 @@ export async function processGeofenceEvent(eventId: string): Promise<void> {
     }
 
     // Create a new time entry starting now
-    // Convert timestamp to ISO string if it's a Date
-    const timestampStr = event.timestamp instanceof Date 
-      ? event.timestamp.toISOString() 
-      : event.timestamp
+    const timestampStr = event.timestamp
     
     await prisma.timeEntry.create({
       data: {
@@ -59,10 +56,7 @@ export async function processGeofenceEvent(eventId: string): Promise<void> {
     })
 
     if (openEntry) {
-      // Convert timestamp to ISO string
-      const timestampStr = event.timestamp instanceof Date 
-        ? event.timestamp.toISOString() 
-        : event.timestamp
+      const timestampStr = event.timestamp
       
       // Parse existing events array (stored as JSON string)
       const existingEvents = openEntry.createdFromEvents 
