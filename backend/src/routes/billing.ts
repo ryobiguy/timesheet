@@ -62,6 +62,7 @@ router.post(
         cancelUrl,
         metadata: {
           orgId: userOrgId,
+          orgName: org.name,
           employeeCount: employeeCount.toString(),
         },
       })
@@ -264,27 +265,45 @@ router.post(
         case 'checkout.session.completed': {
           const session = event.data.object as Stripe.Checkout.Session
           const orgId = session.metadata?.orgId
+          const orgName = session.metadata?.orgName
           const employeeCount = parseInt(session.metadata?.employeeCount || '5')
 
-          if (orgId && session.customer && typeof session.customer === 'string') {
-            const subscription = await stripe.subscriptions.retrieve(
-              session.subscription as string
-            )
+          const customerId =
+            typeof session.customer === 'string' ? session.customer : session.customer?.id
+          const subscriptionId =
+            typeof session.subscription === 'string'
+              ? session.subscription
+              : session.subscription?.id
+
+          if (orgId && customerId && subscriptionId) {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
             // Update quantity based on employee count
-            await stripe.subscriptions.update(subscription.id, {
-              items: [
-                {
-                  id: subscription.items.data[0].id,
-                  quantity: employeeCount,
-                },
-              ],
-            })
+            const firstItem = subscription.items.data[0]
+            if (firstItem?.id) {
+              await stripe.subscriptions.update(subscription.id, {
+                items: [
+                  {
+                    id: firstItem.id,
+                    quantity: employeeCount,
+                  },
+                ],
+              })
+            }
 
-            await prisma.organization.update({
+            // Use upsert so webhook doesn't fail if the org record was recreated/reset
+            await prisma.organization.upsert({
               where: { id: orgId },
-              data: {
-                stripeCustomerId: session.customer,
+              create: {
+                id: orgId,
+                name: orgName || 'Clockly',
+                stripeCustomerId: customerId,
+                stripeSubscriptionId: subscription.id,
+                subscriptionStatus: subscription.status,
+                subscriptionTier: 'professional',
+              },
+              update: {
+                stripeCustomerId: customerId,
                 stripeSubscriptionId: subscription.id,
                 subscriptionStatus: subscription.status,
                 subscriptionTier: 'professional',
