@@ -23,6 +23,9 @@ import billingRouter from './routes/billing'
 export function createApp(logger: Logger) {
   const app = express()
 
+  // Render/production is behind a proxy; required for rate limiting with X-Forwarded-For
+  app.set('trust proxy', 1)
+
   // Stripe webhook needs raw body - register before JSON parser
   app.use('/api/billing/webhook', express.raw({ type: 'application/json' }), billingRouter)
 

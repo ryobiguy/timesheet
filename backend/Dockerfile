@@ -21,5 +21,5 @@ RUN npm run build
 # Expose port
 EXPOSE 5001
 
-# Start the server
-CMD ["npm", "run", "start"]
+# Start the server (ensure SQLite schema exists)
+CMD ["sh", "-c", "npx prisma db push && npm run start"]
