@@ -14,6 +14,7 @@ export interface CreateCheckoutSessionParams {
   customerId?: string
   customerEmail: string
   priceId: string
+  quantity: number
   successUrl: string
   cancelUrl: string
   metadata?: Record<string, string>
@@ -26,7 +27,7 @@ export async function createCheckoutSession(params: CreateCheckoutSessionParams)
     line_items: [
       {
         price: params.priceId,
-        quantity: 1, // We'll update quantity based on employee count
+        quantity: params.quantity,
       },
     ],
     success_url: params.successUrl,

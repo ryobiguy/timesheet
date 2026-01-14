@@ -5,7 +5,8 @@ import type { Request, Response, NextFunction } from 'express'
  * Removes potentially dangerous characters from string inputs
  */
 export function sanitizeInput(req: Request, res: Response, next: NextFunction): void {
-  if (req.body && typeof req.body === 'object') {
+  // Avoid mutating raw request bodies (e.g., Stripe webhooks use Buffer body for signature verification)
+  if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
     req.body = sanitizeObject(req.body)
   }
   if (req.query && typeof req.query === 'object') {

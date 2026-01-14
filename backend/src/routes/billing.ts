@@ -57,6 +57,7 @@ router.post(
         customerId: org.stripeCustomerId || undefined,
         customerEmail: req.user!.email,
         priceId: env.STRIPE_PRICE_ID,
+        quantity: employeeCount,
         successUrl,
         cancelUrl,
         metadata: {
@@ -171,9 +172,11 @@ router.get('/status', requireAuth, async (req: AuthRequest, res: Response) => {
           ? {
               id: subscription.id,
               status: subscription.status,
+              currentPeriodEnd: (subscription as any).current_period_end ?? 0,
+              cancelAtPeriodEnd: (subscription as any).cancel_at_period_end ?? false,
               items: subscription.items.data.map((item) => ({
                 priceId: item.price.id,
-                quantity: item.quantity,
+                quantity: item.quantity ?? 0,
               })),
             }
           : null,
