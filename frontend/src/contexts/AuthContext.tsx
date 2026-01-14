@@ -1,11 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { authApi, type User } from '../lib/authApi'
+import { authApi, type User, type RegisterInput } from '../lib/authApi'
 
 interface AuthContextType {
   user: User | null
   token: string | null
   login: (email: string, password: string) => Promise<void>
-  register: (data: { email: string; name: string; password: string; orgId: string; role?: string }) => Promise<void>
+  register: (data: RegisterInput) => Promise<void>
   companySignup: (data: { organizationName: string; adminName: string; adminEmail: string; adminPassword: string; subscriptionTier: string }) => Promise<void>
   logout: () => void
   isLoading: boolean
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(user)
   }
 
-  const register = async (data: { email: string; name: string; password: string; orgId: string; role?: string }) => {
+  const register = async (data: RegisterInput) => {
     const response = await authApi.register(data)
     const { user, token } = response.data
     

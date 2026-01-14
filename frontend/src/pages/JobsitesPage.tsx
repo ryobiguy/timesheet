@@ -220,17 +220,21 @@ function JobsiteCard({
   )
 }
 
-function JobsiteForm({
-  initialData,
-  onSubmit,
-  onCancel,
-  isLoading,
-}: {
-  initialData?: Jobsite
-  onSubmit: (data: CreateJobsiteInput | UpdateJobsiteInput) => void
-  onCancel: () => void
-  isLoading: boolean
-}) {
+type JobsiteFormProps =
+  | {
+      initialData?: undefined
+      onSubmit: (data: CreateJobsiteInput) => void
+      onCancel: () => void
+      isLoading: boolean
+    }
+  | {
+      initialData: Jobsite
+      onSubmit: (data: UpdateJobsiteInput) => void
+      onCancel: () => void
+      isLoading: boolean
+    }
+
+function JobsiteForm({ initialData, onSubmit, onCancel, isLoading }: JobsiteFormProps) {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     address: initialData?.address || '',
@@ -242,13 +246,24 @@ function JobsiteForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (initialData) {
+      onSubmit({
+        name: formData.name,
+        address: formData.address,
+        latitude: parseFloat(formData.latitude),
+        longitude: parseFloat(formData.longitude),
+        radiusMeters: parseInt(formData.radiusMeters),
+      })
+      return
+    }
+
     onSubmit({
       name: formData.name,
       address: formData.address,
       latitude: parseFloat(formData.latitude),
       longitude: parseFloat(formData.longitude),
       radiusMeters: parseInt(formData.radiusMeters),
-      ...(initialData ? {} : { orgId: formData.orgId }),
+      orgId: formData.orgId,
     })
   }
 
