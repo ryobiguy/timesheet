@@ -171,8 +171,6 @@ router.get('/status', requireAuth, async (req: AuthRequest, res: Response) => {
           ? {
               id: subscription.id,
               status: subscription.status,
-              currentPeriodEnd: subscription.current_period_end,
-              cancelAtPeriodEnd: subscription.cancel_at_period_end,
               items: subscription.items.data.map((item) => ({
                 priceId: item.price.id,
                 quantity: item.quantity,
