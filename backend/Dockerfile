@@ -15,8 +15,11 @@ RUN npx prisma generate
 # Copy source code
 COPY . .
 
+# Build the TypeScript app
+RUN npm run build
+
 # Expose port
 EXPOSE 5001
 
 # Start the server
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "start"]
