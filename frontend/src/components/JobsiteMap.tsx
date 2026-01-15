@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { MapContainer, TileLayer, Circle, Marker, useMapEvents } from 'react-leaflet'
+import { useEffect, useState } from 'react'
+import { MapContainer, TileLayer, Circle, Marker, useMapEvents, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -19,20 +19,35 @@ interface JobsiteMapProps {
   onRadiusChange: (radius: number) => void
 }
 
-function MapClickHandler({ onLocationChange }: { onLocationChange: (lat: number, lng: number) => void }) {
+function MapClickHandler({ 
+  onLocationChange, 
+  onMapClick 
+}: { 
+  onLocationChange: (lat: number, lng: number) => void
+  onMapClick?: () => void
+}) {
   useMapEvents({
     click: (e) => {
       const { lat, lng } = e.latlng
       onLocationChange(lat, lng)
+      onMapClick?.()
     },
   })
+  return null
+}
+
+function MapCenter({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap()
+  useEffect(() => {
+    map.setView([lat, lng], 15)
+  }, [map, lat, lng])
   return null
 }
 
 export function JobsiteMap({ latitude, longitude, radiusMeters, onLocationChange, onRadiusChange }: JobsiteMapProps) {
   const [searchAddress, setSearchAddress] = useState('')
   const [isSearching, setIsSearching] = useState(false)
-  const mapRef = useRef<L.Map | null>(null)
+  const [searchResult, setSearchResult] = useState<{ lat: number; lng: number } | null>(null)
 
   const center: [number, number] = latitude && longitude ? [latitude, longitude] : [51.505, -0.09] // Default to London
 
@@ -57,11 +72,7 @@ export function JobsiteMap({ latitude, longitude, radiusMeters, onLocationChange
         const newLat = parseFloat(lat)
         const newLng = parseFloat(lon)
         onLocationChange(newLat, newLng)
-
-        // Center map on the found location
-        if (mapRef.current) {
-          mapRef.current.setView([newLat, newLng], 15)
-        }
+        setSearchResult({ lat: newLat, lng: newLng })
       } else {
         alert('Address not found. Please try a different search term.')
       }
@@ -104,15 +115,16 @@ export function JobsiteMap({ latitude, longitude, radiusMeters, onLocationChange
           center={center}
           zoom={latitude && longitude ? 15 : 10}
           style={{ height: '100%', width: '100%' }}
-          whenCreated={(map) => {
-            mapRef.current = map
-          }}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <MapClickHandler onLocationChange={onLocationChange} />
+          <MapClickHandler 
+            onLocationChange={onLocationChange}
+            onMapClick={() => setSearchResult(null)}
+          />
+          {searchResult && <MapCenter lat={searchResult.lat} lng={searchResult.lng} />}
           {latitude && longitude && (
             <>
               <Marker position={[latitude, longitude]} />
