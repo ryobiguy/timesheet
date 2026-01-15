@@ -12,7 +12,7 @@ const envSchema = z.object({
     }
     return num
   }, z.number().int().positive().default(5001)),
-  DATABASE_URL: z.string().url(), // Required for PostgreSQL
+  DATABASE_URL: z.string().url().optional(), // Optional during startup, will fail on first DB query if missing
   JWT_SECRET: z.string().default('your-secret-key-change-in-production'),
   FRONTEND_URL: z.string().url().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),

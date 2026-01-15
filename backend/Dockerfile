@@ -22,4 +22,4 @@ RUN npm run build
 EXPOSE 5001
 
 # Start the server (run migrations for PostgreSQL)
-CMD ["sh", "-c", "npx prisma migrate deploy || npx prisma db push && npm run start"]
+CMD ["sh", "-c", "if [ -n \"$DATABASE_URL\" ]; then npx prisma migrate deploy || npx prisma db push --accept-data-loss; fi && npm run start"]

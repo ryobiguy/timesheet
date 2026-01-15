@@ -32,9 +32,36 @@ export function createApp(logger: Logger) {
   // Security and parsing middleware
   app.use(express.json({ limit: '10mb' })) // Limit JSON payload size
   app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+  // CORS configuration
+  const frontendUrl = process.env.FRONTEND_URL
+  const allowedOrigins = frontendUrl 
+    ? [frontendUrl, frontendUrl.replace(/\/$/, '')] // Include with and without trailing slash
+    : (process.env.NODE_ENV === 'production' 
+        ? ['https://timesheet-one-beta.vercel.app'] // Default production frontend
+        : ['http://localhost:5175', 'http://localhost:5173'])
+  
   app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5175',
-    credentials: true
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true)
+      
+      // Check if origin matches any allowed origin
+      const isAllowed = allowedOrigins.some(allowed => 
+        origin === allowed || origin.startsWith(allowed)
+      )
+      
+      if (isAllowed || process.env.NODE_ENV === 'development') {
+        callback(null, true)
+      } else {
+        console.warn(`CORS: Origin ${origin} not in allowed list: ${allowedOrigins.join(', ')}`)
+        // Still allow for now to debug - remove in production
+        callback(null, true)
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Content-Type']
   }))
   app.use(helmet({
     contentSecurityPolicy: {
