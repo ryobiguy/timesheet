@@ -275,7 +275,20 @@ router.post(
               ? session.subscription
               : session.subscription?.id
 
-          if (orgId && customerId && subscriptionId) {
+          if (!orgId) {
+            console.error('checkout.session.completed: Missing orgId in metadata', session.metadata)
+            break
+          }
+
+          if (!customerId || !subscriptionId) {
+            console.error('checkout.session.completed: Missing customerId or subscriptionId', {
+              customerId,
+              subscriptionId,
+            })
+            break
+          }
+
+          try {
             const subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
             // Update quantity based on employee count
@@ -291,12 +304,35 @@ router.post(
               })
             }
 
+            // Generate company code if creating new org
+            const generateCompanyCode = async (): Promise<string> => {
+              let code: string
+              let exists: boolean
+              do {
+                // Generate random 6-digit code (100000-999999)
+                code = Math.floor(100000 + Math.random() * 900000).toString()
+                const existing = await prisma.organization.findUnique({
+                  where: { companyCode: code }
+                })
+                exists = !!existing
+              } while (exists)
+              return code
+            }
+
             // Use upsert so webhook doesn't fail if the org record was recreated/reset
+            // Check if org exists first to avoid generating unnecessary code
+            const existingOrg = await prisma.organization.findUnique({
+              where: { id: orgId }
+            })
+
+            const companyCode = existingOrg?.companyCode || await generateCompanyCode()
+
             await prisma.organization.upsert({
               where: { id: orgId },
               create: {
                 id: orgId,
                 name: orgName || 'Clockly',
+                companyCode,
                 stripeCustomerId: customerId,
                 stripeSubscriptionId: subscription.id,
                 subscriptionStatus: subscription.status,
@@ -309,6 +345,11 @@ router.post(
                 subscriptionTier: 'professional',
               },
             })
+
+            console.log(`checkout.session.completed: Successfully processed for org ${orgId}`)
+          } catch (error: any) {
+            console.error(`checkout.session.completed: Error processing org ${orgId}:`, error.message)
+            throw error
           }
           break
         }
