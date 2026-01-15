@@ -44,7 +44,7 @@ router.post(
         email,
         name,
         passwordHash,
-        orgId,
+        orgId: org.id,
         role
       },
       select: {
