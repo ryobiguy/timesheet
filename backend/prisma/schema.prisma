@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Organization {
@@ -17,8 +17,8 @@ model Organization {
   stripeCustomerId   String?
   stripeSubscriptionId String?
   subscriptionStatus String?  // active | past_due | canceled | trialing | unpaid
-  createdAt          String   @default(cuid()) // SQLite workaround for DateTime
-  updatedAt          String   @default(cuid())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   users     User[]
   jobsites  Jobsite[]
@@ -34,8 +34,8 @@ model User {
   passwordHash String
   role         String    @default("WORKER") // ADMIN | SUPERVISOR | WORKER
   orgId        String
-  createdAt    String    @default(cuid())
-  updatedAt    String    @default(cuid())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   org          Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   assignments  Assignment[]
@@ -55,8 +55,8 @@ model Jobsite {
   longitude   Float
   radiusMeters Int      @default(150)
   orgId       String
-  createdAt   String   @default(cuid())
-  updatedAt   String   @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   assignments Assignment[]
@@ -71,8 +71,8 @@ model Assignment {
   workerId     String
   jobsiteId    String
   scheduleDays String   @default("[]") // JSON string array
-  createdAt    String   @default(cuid())
-  updatedAt    String   @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   worker  User     @relation(fields: [workerId], references: [id], onDelete: Cascade)
   jobsite Jobsite  @relation(fields: [jobsiteId], references: [id], onDelete: Cascade)
@@ -86,10 +86,10 @@ model GeofenceEvent {
   workerId  String
   jobsiteId String
   type      String      @default("ENTER") // ENTER | EXIT
-  timestamp String      @default(cuid()) // ISO string
+  timestamp DateTime    @default(now())
   accuracy  Float?
   source    String      @default("device")
-  createdAt String      @default(cuid())
+  createdAt DateTime    @default(now())
 
   worker  User    @relation(fields: [workerId], references: [id], onDelete: Cascade)
   jobsite Jobsite @relation(fields: [jobsiteId], references: [id], onDelete: Cascade)
@@ -101,14 +101,14 @@ model TimeEntry {
   id                String     @id @default(cuid())
   workerId          String
   jobsiteId         String
-  startAt           String
-  endAt             String?
+  startAt           DateTime
+  endAt             DateTime?
   durationMinutes   Int?
   status            String     @default("PENDING") // PENDING | APPROVED | DISPUTED
   createdFromEvents String     @default("[]") // JSON string array
   modifiedBy        String?
-  createdAt         String     @default(cuid())
-  updatedAt         String     @default(cuid())
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
   worker   User     @relation(fields: [workerId], references: [id], onDelete: Cascade)
   jobsite  Jobsite  @relation(fields: [jobsiteId], references: [id], onDelete: Cascade)
@@ -124,9 +124,9 @@ model Dispute {
   reason       String
   resolution   String?
   resolvedBy   String?
-  resolvedAt   String?
-  createdAt    String   @default(cuid())
-  updatedAt    String   @default(cuid())
+  resolvedAt   DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   timeEntry TimeEntry @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
   raisedByUser User @relation("DisputeRaisedBy", fields: [raisedBy], references: [id], onDelete: Cascade)
@@ -138,12 +138,12 @@ model TimesheetSummary {
   id            String   @id @default(cuid())
   workerId      String
   orgId         String
-  weekStart     String
+  weekStart     DateTime
   totalRegular  Int      @default(0)
   totalOvertime Int      @default(0)
   approvalState String   @default("PENDING") // PENDING | APPROVED | REJECTED
-  createdAt     String   @default(cuid())
-  updatedAt     String   @default(cuid())
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   worker User         @relation(fields: [workerId], references: [id], onDelete: Cascade)
   org    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
