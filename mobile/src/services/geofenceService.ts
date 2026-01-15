@@ -94,8 +94,27 @@ export class GeofenceTracker {
     this.currentLocation = location
     const { latitude, longitude, accuracy } = location.coords
 
+    // Validate location data
+    if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
+      console.warn('Invalid location data:', location.coords)
+      return
+    }
+
     // Check each jobsite geofence
     for (const jobsite of this.jobsites) {
+      // Validate jobsite data
+      if (
+        !jobsite.latitude ||
+        !jobsite.longitude ||
+        isNaN(jobsite.latitude) ||
+        isNaN(jobsite.longitude) ||
+        !jobsite.radiusMeters ||
+        isNaN(jobsite.radiusMeters)
+      ) {
+        console.warn('Invalid jobsite data:', jobsite)
+        continue
+      }
+
       const distance = calculateDistance(
         latitude,
         longitude,

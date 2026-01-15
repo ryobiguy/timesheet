@@ -22,16 +22,21 @@ export function HomeScreen() {
   const [tracker, setTracker] = useState<GeofenceTracker | null>(null)
 
   useEffect(() => {
-    loadData()
+    if (user) {
+      loadData()
+    }
     return () => {
       if (tracker) {
         tracker.stopTracking()
       }
     }
-  }, [user])
+  }, [user?.id])
 
   const loadData = async () => {
-    if (!user) return
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
 
     try {
       const [assignmentsData, activeEntryData] = await Promise.all([
@@ -50,11 +55,12 @@ export function HomeScreen() {
           `Jobsite: ${assignmentsData.find((a) => a.jobsiteId === event.jobsiteId)?.jobsite.name || 'Unknown'}`
         )
         // Reload active entry
-        timeEntryService.getActiveTimeEntry(user.id).then(setActiveEntry)
+        timeEntryService.getActiveTimeEntry(user.id).then(setActiveEntry).catch(console.error)
       })
       setTracker(newTracker)
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to load data')
+      console.error('Load data error:', error)
+      Alert.alert('Error', error?.response?.data?.message || error.message || 'Failed to load data')
     } finally {
       setIsLoading(false)
     }
@@ -110,9 +116,9 @@ export function HomeScreen() {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Current Status</Text>
         <View style={styles.statusRow}>
-          <View style={[styles.statusIndicator, isTracking && styles.statusActive]} />
+          <View style={[styles.statusIndicator, isTracking === true && styles.statusActive]} />
           <Text style={styles.statusText}>
-            {isTracking ? 'GPS Tracking Active' : 'GPS Tracking Inactive'}
+            {isTracking === true ? 'GPS Tracking Active' : 'GPS Tracking Inactive'}
           </Text>
         </View>
         {activeEntry && (
@@ -126,11 +132,11 @@ export function HomeScreen() {
           </View>
         )}
         <TouchableOpacity
-          style={[styles.trackButton, isTracking && styles.trackButtonActive]}
+          style={[styles.trackButton, isTracking === true && styles.trackButtonActive]}
           onPress={toggleTracking}
         >
           <Text style={styles.trackButtonText}>
-            {isTracking ? 'Stop Tracking' : 'Start Tracking'}
+            {isTracking === true ? 'Stop Tracking' : 'Start Tracking'}
           </Text>
         </TouchableOpacity>
       </View>

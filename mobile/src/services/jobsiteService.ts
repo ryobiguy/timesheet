@@ -20,14 +20,24 @@ export interface Assignment {
 
 export const jobsiteService = {
   async getAssignments(workerId: string): Promise<Assignment[]> {
-    const response = await api.get<{ data: Assignment[] }>(
-      `/api/assignments?workerId=${workerId}`
-    )
-    return response.data.data
+    try {
+      const response = await api.get<{ data: Assignment[] }>(
+        `/api/assignments?workerId=${workerId}`
+      )
+      return response.data?.data || []
+    } catch (error) {
+      console.error('Failed to get assignments:', error)
+      throw error
+    }
   },
 
   async getJobsite(jobsiteId: string): Promise<Jobsite> {
-    const response = await api.get<{ data: Jobsite }>(`/api/jobsites/${jobsiteId}`)
-    return response.data.data
+    try {
+      const response = await api.get<{ data: Jobsite }>(`/api/jobsites/${jobsiteId}`)
+      return response.data?.data
+    } catch (error) {
+      console.error('Failed to get jobsite:', error)
+      throw error
+    }
   },
 }

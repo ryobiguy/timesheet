@@ -26,7 +26,12 @@ export function LoginScreen() {
     try {
       await login(email, password)
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Invalid credentials')
+      console.error('Login error:', error)
+      const errorMessage = error?.message || 'Invalid credentials'
+      Alert.alert(
+        'Login Failed', 
+        errorMessage
+      )
     } finally {
       setIsLoading(false)
     }
@@ -54,14 +59,15 @@ export function LoginScreen() {
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={Boolean(true)}
             autoCapitalize="none"
+            autoComplete="password"
           />
 
           <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
+            style={[styles.button, isLoading === true && styles.buttonDisabled]}
             onPress={handleLogin}
-            disabled={isLoading}
+            disabled={Boolean(isLoading === true)}
           >
             {isLoading ? (
               <ActivityIndicator color="#fff" />

@@ -17,6 +17,13 @@ const resetPasswordSchema = z.object({
   newPassword: z.string().min(6).max(100)
 })
 
+const createUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).max(255),
+  password: z.string().min(6).max(100),
+  role: z.enum(['ADMIN', 'SUPERVISOR', 'WORKER']).default('WORKER')
+})
+
 const userParamsSchema = z.object({
   id: z.string().cuid()
 })
@@ -95,6 +102,53 @@ router.get(
         hasMore: offset + limit < total
       }
     })
+  }
+)
+
+// POST /api/users - Create new user (admin only)
+router.post(
+  '/',
+  requireAuth,
+  requireRole('ADMIN'),
+  validateBody(createUserSchema),
+  async (req: AuthRequest, res: Response) => {
+    const { email, name, password, role } = req.body
+    const user = req.user!
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    })
+
+    if (existingUser) {
+      return res.status(409).json({
+        error: 'Conflict',
+        message: 'User with this email already exists'
+      })
+    }
+
+    // Create user in the same organization as the admin
+    const passwordHash = await hashPassword(password)
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        name,
+        passwordHash,
+        orgId: user.orgId,
+        role: role || 'WORKER'
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        orgId: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
+
+    res.status(201).json({ data: newUser })
   }
 )
 

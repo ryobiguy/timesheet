@@ -20,16 +20,35 @@ export interface AuthResponse {
 
 export const authService = {
   async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await api.post<{ data: AuthResponse }>('/api/auth/login', {
-      email,
-      password,
-    })
-    
-    const { user, token } = response.data.data
-    await AsyncStorage.setItem('token', token)
-    await AsyncStorage.setItem('user', JSON.stringify(user))
-    
-    return { user, token }
+    try {
+      const response = await api.post<{ data: AuthResponse }>('/api/auth/login', {
+        email,
+        password,
+      })
+      
+      const { user, token } = response.data?.data || response.data
+      if (!user || !token) {
+        throw new Error('Invalid response from server')
+      }
+      
+      await AsyncStorage.setItem('token', token)
+      await AsyncStorage.setItem('user', JSON.stringify(user))
+      
+      return { user, token }
+    } catch (error: any) {
+      console.error('Login error:', error)
+      
+      // Provide better error messages
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        throw new Error('Unable to connect to server. Please check your internet connection and try again.')
+      } else if (error.response?.status === 401) {
+        throw new Error('Invalid email or password')
+      } else if (error.response?.status) {
+        throw new Error(error.response?.data?.message || `Server error: ${error.response.status}`)
+      } else {
+        throw new Error(error.message || 'Login failed. Please try again.')
+      }
+    }
   },
 
   async logout(): Promise<void> {

@@ -92,6 +92,23 @@ async function resetPassword(id: string, newPassword: string) {
   return response.json()
 }
 
+async function createUser(data: { email: string; name: string; password: string; role: 'ADMIN' | 'SUPERVISOR' | 'WORKER' }) {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${API_BASE_URL}/api/users`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || 'Failed to create user')
+  }
+  return response.json()
+}
+
 export function UsersPage() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
@@ -101,6 +118,13 @@ export function UsersPage() {
   const [editingUser, setEditingUser] = useState<Partial<User>>({})
   const [resettingPasswordId, setResettingPasswordId] = useState<string | null>(null)
   const [newPassword, setNewPassword] = useState('')
+  const [showAddUser, setShowAddUser] = useState(false)
+  const [newUser, setNewUser] = useState({
+    email: '',
+    name: '',
+    password: '',
+    role: 'WORKER' as 'ADMIN' | 'SUPERVISOR' | 'WORKER'
+  })
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['users', search, roleFilter],
@@ -132,6 +156,15 @@ export function UsersPage() {
     onSuccess: () => {
       setResettingPasswordId(null)
       setNewPassword('')
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+  })
+
+  const createUserMutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      setShowAddUser(false)
+      setNewUser({ email: '', name: '', password: '', role: 'WORKER' })
       queryClient.invalidateQueries({ queryKey: ['users'] })
     },
   })
@@ -172,6 +205,14 @@ export function UsersPage() {
           <h1 className="text-2xl sm:text-3xl font-semibold">User Management</h1>
           <p className="mt-2 text-sm sm:text-base text-slate-600">Manage users and their roles</p>
         </div>
+        {user?.role === 'ADMIN' && (
+          <button
+            onClick={() => setShowAddUser(true)}
+            className="rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-600 transition"
+          >
+            + Add User
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -384,6 +425,89 @@ export function UsersPage() {
           <p className="text-sm text-red-600">
             {(deleteMutation.error as Error)?.message || 'Failed to delete user'}
           </p>
+        </div>
+      )}
+
+      {/* Add User Modal */}
+      {showAddUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 max-w-md w-full shadow-xl">
+            <h2 className="text-xl font-semibold mb-4 text-slate-900">Add New User</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Name</label>
+                <input
+                  type="text"
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                  placeholder="John Doe"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  placeholder="user@example.com"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
+                <select
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value as any })}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                >
+                  <option value="WORKER">Worker</option>
+                  <option value="SUPERVISOR">Supervisor</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Password</label>
+                <input
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  placeholder="Minimum 6 characters"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-slate-500">User will use this password to log in</p>
+              </div>
+              {createUserMutation.isError && (
+                <div className="rounded-xl border border-red-300 bg-red-50 p-3">
+                  <p className="text-sm text-red-600">
+                    {(createUserMutation.error as Error)?.message || 'Failed to create user'}
+                  </p>
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={() => {
+                    if (newUser.name && newUser.email && newUser.password && newUser.password.length >= 6) {
+                      createUserMutation.mutate(newUser)
+                    }
+                  }}
+                  disabled={!newUser.name || !newUser.email || !newUser.password || newUser.password.length < 6 || createUserMutation.isPending}
+                  className="flex-1 rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  {createUserMutation.isPending ? 'Creating...' : 'Create User'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddUser(false)
+                    setNewUser({ email: '', name: '', password: '', role: 'WORKER' })
+                  }}
+                  className="flex-1 sm:flex-none rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
