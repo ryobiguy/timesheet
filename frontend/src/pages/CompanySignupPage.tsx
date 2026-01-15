@@ -14,6 +14,7 @@ export function CompanySignupPage() {
   })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [companyCode, setCompanyCode] = useState<string | null>(null)
   const { companySignup } = useAuth()
   const navigate = useNavigate()
 
@@ -34,16 +35,36 @@ export function CompanySignupPage() {
     setIsLoading(true)
 
     try {
-      await companySignup({
-        organizationName: formData.organizationName,
-        adminName: formData.adminName,
-        adminEmail: formData.adminEmail,
-        adminPassword: formData.adminPassword,
-        subscriptionTier: formData.subscriptionTier,
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001'
+      const response = await fetch(`${API_BASE_URL}/api/organizations/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationName: formData.organizationName,
+          adminName: formData.adminName,
+          adminEmail: formData.adminEmail,
+          adminPassword: formData.adminPassword,
+          subscriptionTier: formData.subscriptionTier,
+        }),
       })
       
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Signup failed')
+      }
+      
+      const result = await response.json()
+      const { user, token, organization } = result.data
+      
+      // Store company code to show it
+      setCompanyCode(organization.companyCode)
+      
+      localStorage.setItem('token', token)
+      localStorage.setItem('user', JSON.stringify(user))
+      
       toast.success('Account created successfully!')
-      navigate('/dashboard')
+      
+      // Don't navigate yet - show the company code first
     } catch (err: any) {
       setError(err.message || 'Signup failed')
       toast.error(err.message || 'Failed to create account')
@@ -169,6 +190,37 @@ export function CompanySignupPage() {
           </p>
         </div>
       </div>
+
+      {companyCode && (
+        <div className="mt-8 rounded-3xl border-2 border-sky-500 bg-sky-50 p-8 text-center">
+          <h3 className="text-xl font-semibold text-slate-900 mb-4">Your Company Code</h3>
+          <div className="mb-4">
+            <div className="inline-block rounded-xl bg-white px-8 py-4 border-2 border-sky-500">
+              <p className="text-4xl font-mono font-bold text-sky-600 tracking-widest">
+                {companyCode}
+              </p>
+            </div>
+          </div>
+          <p className="text-sm text-slate-600 mb-6">
+            Share this code with your workers so they can register for your company.
+          </p>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(companyCode)
+              toast.success('Company code copied to clipboard!')
+            }}
+            className="mr-4 rounded-xl bg-sky-500 px-6 py-2 text-sm font-semibold text-white hover:bg-sky-600 transition"
+          >
+            Copy Code
+          </button>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="rounded-xl bg-white border-2 border-sky-500 px-6 py-2 text-sm font-semibold text-sky-600 hover:bg-sky-50 transition"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      )}
     </div>
   )
 }

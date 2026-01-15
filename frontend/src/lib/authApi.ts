@@ -26,7 +26,7 @@ export interface RegisterInput {
   email: string
   name: string
   password: string
-  orgId: string
+  companyCode: string
   role?: 'ADMIN' | 'SUPERVISOR' | 'WORKER'
 }
 

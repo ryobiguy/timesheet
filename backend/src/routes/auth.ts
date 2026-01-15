@@ -11,7 +11,7 @@ router.post(
   '/register',
   validateBody(registerSchema),
   async (req: Request, res: Response) => {
-    const { email, name, password, orgId, role } = req.body
+    const { email, name, password, companyCode, role } = req.body
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -25,15 +25,15 @@ router.post(
       })
     }
 
-    // Verify organization exists
+    // Find organization by company code
     const org = await prisma.organization.findUnique({
-      where: { id: orgId }
+      where: { companyCode }
     })
 
     if (!org) {
       return res.status(404).json({
         error: 'Not found',
-        message: 'Organization not found'
+        message: 'Invalid company code. Please check with your administrator.'
       })
     }
 

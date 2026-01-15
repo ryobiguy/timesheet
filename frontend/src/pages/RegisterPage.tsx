@@ -8,7 +8,7 @@ export function RegisterPage() {
     name: '',
     password: '',
     confirmPassword: '',
-    orgId: '',
+    companyCode: '',
     role: 'WORKER' as 'ADMIN' | 'SUPERVISOR' | 'WORKER'
   })
   const [error, setError] = useState('')
@@ -37,7 +37,7 @@ export function RegisterPage() {
         email: formData.email,
         name: formData.name,
         password: formData.password,
-        orgId: formData.orgId,
+        companyCode: formData.companyCode,
         role: formData.role
       })
       navigate('/dashboard')
@@ -88,16 +88,18 @@ export function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Organization ID</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Company Code</label>
             <input
               type="text"
-              value={formData.orgId}
-              onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
+              value={formData.companyCode}
+              onChange={(e) => setFormData({ ...formData, companyCode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
               required
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
-              placeholder="cuid..."
+              maxLength={6}
+              pattern="[0-9]{6}"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 text-center text-2xl font-mono tracking-widest"
+              placeholder="000000"
             />
-            <p className="mt-1 text-xs text-slate-500">You'll need an organization ID to register</p>
+            <p className="mt-1 text-xs text-slate-500">Enter your 6-digit company code provided by your administrator</p>
           </div>
 
           <div>

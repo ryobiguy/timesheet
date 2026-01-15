@@ -18,12 +18,30 @@ async function fetchStats() {
   return response.json()
 }
 
+async function fetchOrganization() {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${API_BASE_URL}/api/organizations/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  if (!response.ok) {
+    throw new Error('Failed to fetch organization')
+  }
+  return response.json()
+}
+
 export function OverviewPage() {
   const navigate = useNavigate()
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['stats', 'overview'],
     queryFn: fetchStats,
     refetchInterval: 30000, // Refetch every 30 seconds
+  })
+
+  const { data: orgData } = useQuery({
+    queryKey: ['organization'],
+    queryFn: fetchOrganization,
   })
 
   const handleExport = async () => {
@@ -82,8 +100,38 @@ export function OverviewPage() {
   ]
 
   const pendingEntries = stats.pendingEntries || []
+  const companyCode = orgData?.data?.companyCode
+
   return (
     <div className="space-y-8">
+      {/* Company Code Display */}
+      {companyCode && (
+        <section className="rounded-3xl border-2 border-sky-500 bg-gradient-to-br from-sky-50 to-white p-6 shadow-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm uppercase tracking-widest text-slate-500">Your Company Code</p>
+              <p className="mt-1 text-sm text-slate-600">Share this code with your workers so they can register</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="rounded-xl bg-white px-6 py-3 border-2 border-sky-500">
+                <p className="text-3xl font-mono font-bold text-sky-600 tracking-widest">
+                  {companyCode}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(companyCode)
+                  toast.success('Company code copied!')
+                }}
+                className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600 transition"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-sky-50 to-white p-6 shadow-lg">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>

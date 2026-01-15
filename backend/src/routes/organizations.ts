@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express'
 import { prisma } from '../lib/prisma'
 import { hashPassword, generateToken } from '../lib/auth'
 import { validateBody } from '../middleware/validate'
+import { requireAuth, type AuthRequest } from '../middleware/auth'
 import { z } from 'zod'
 import { authLimiter } from '../middleware/rateLimiter'
 
@@ -35,12 +36,30 @@ router.post(
       })
     }
 
+    // Generate unique 6-digit company code
+    const generateCompanyCode = async (): Promise<string> => {
+      let code: string
+      let exists: boolean
+      do {
+        // Generate random 6-digit code (100000-999999)
+        code = Math.floor(100000 + Math.random() * 900000).toString()
+        const existing = await prisma.organization.findUnique({
+          where: { companyCode: code }
+        })
+        exists = !!existing
+      } while (exists)
+      return code
+    }
+
+    const companyCode = await generateCompanyCode()
+
     // Create organization and admin user in a transaction
     const result = await prisma.$transaction(async (tx) => {
       // Create organization
       const org = await tx.organization.create({
         data: {
           name: organizationName,
+          companyCode,
           subscriptionTier
         }
       })
@@ -75,12 +94,43 @@ router.post(
         organization: {
           id: result.org.id,
           name: result.org.name,
+          companyCode: result.org.companyCode,
           subscriptionTier: result.org.subscriptionTier
         },
         user: result.user,
         token
       }
     })
+  }
+)
+
+// GET /api/organizations/me - Get current user's organization
+router.get(
+  '/me',
+  requireAuth,
+  async (req: AuthRequest, res: Response) => {
+    const user = req.user!
+    
+    const org = await prisma.organization.findUnique({
+      where: { id: user.orgId },
+      select: {
+        id: true,
+        name: true,
+        companyCode: true,
+        subscriptionTier: true,
+        subscriptionStatus: true,
+        createdAt: true
+      }
+    })
+
+    if (!org) {
+      return res.status(404).json({
+        error: 'Not found',
+        message: 'Organization not found'
+      })
+    }
+
+    res.json({ data: org })
   }
 )
 
