@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { jobsitesApi, type Jobsite, type CreateJobsiteInput, type UpdateJobsiteInput } from '../lib/api'
+import { JobsiteMap } from '../components/JobsiteMap'
+import { useAuth } from '../contexts/AuthContext'
 
 export function JobsitesPage() {
   const [isCreating, setIsCreating] = useState(false)
@@ -235,24 +237,31 @@ type JobsiteFormProps =
     }
 
 function JobsiteForm({ initialData, onSubmit, onCancel, isLoading }: JobsiteFormProps) {
+  const { user } = useAuth()
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     address: initialData?.address || '',
-    latitude: initialData?.latitude.toString() || '',
-    longitude: initialData?.longitude.toString() || '',
-    radiusMeters: initialData?.radiusMeters.toString() || '150',
-    orgId: initialData?.orgId || '',
+    latitude: initialData?.latitude || null as number | null,
+    longitude: initialData?.longitude || null as number | null,
+    radiusMeters: initialData?.radiusMeters || 150,
+    orgId: initialData?.orgId || user?.orgId || '',
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!formData.latitude || !formData.longitude) {
+      toast.error('Please select a location on the map')
+      return
+    }
+
     if (initialData) {
       onSubmit({
         name: formData.name,
         address: formData.address,
-        latitude: parseFloat(formData.latitude),
-        longitude: parseFloat(formData.longitude),
-        radiusMeters: parseInt(formData.radiusMeters),
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        radiusMeters: formData.radiusMeters,
       })
       return
     }
@@ -260,15 +269,23 @@ function JobsiteForm({ initialData, onSubmit, onCancel, isLoading }: JobsiteForm
     onSubmit({
       name: formData.name,
       address: formData.address,
-      latitude: parseFloat(formData.latitude),
-      longitude: parseFloat(formData.longitude),
-      radiusMeters: parseInt(formData.radiusMeters),
+      latitude: formData.latitude,
+      longitude: formData.longitude,
+      radiusMeters: formData.radiusMeters,
       orgId: formData.orgId,
     })
   }
 
+  const handleLocationChange = (lat: number, lng: number) => {
+    setFormData({ ...formData, latitude: lat, longitude: lng })
+  }
+
+  const handleRadiusChange = (radius: number) => {
+    setFormData({ ...formData, radiusMeters: radius })
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 space-y-4">
+    <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">Name</label>
@@ -282,7 +299,7 @@ function JobsiteForm({ initialData, onSubmit, onCancel, isLoading }: JobsiteForm
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Address</label>
+          <label className="block text-sm font-medium text-slate-700 mb-2">Address</label>
           <input
             type="text"
             value={formData.address}
@@ -292,53 +309,17 @@ function JobsiteForm({ initialData, onSubmit, onCancel, isLoading }: JobsiteForm
             placeholder="123 Main St, City, State"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Latitude</label>
-          <input
-            type="number"
-            step="any"
-            value={formData.latitude}
-            onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-            required
-            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
-            placeholder="40.7128"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Longitude</label>
-          <input
-            type="number"
-            step="any"
-            value={formData.longitude}
-            onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-            required
-            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
-            placeholder="-74.0060"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Radius (meters)</label>
-          <input
-            type="number"
-            value={formData.radiusMeters}
-            onChange={(e) => setFormData({ ...formData, radiusMeters: e.target.value })}
-            required
-            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
-          />
-        </div>
-        {!initialData && (
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Organization ID</label>
-            <input
-              type="text"
-              value={formData.orgId}
-              onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
-              required
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
-              placeholder="cuid..."
-            />
-          </div>
-        )}
+      </div>
+
+      {/* Interactive Map */}
+      <div>
+        <JobsiteMap
+          latitude={formData.latitude}
+          longitude={formData.longitude}
+          radiusMeters={formData.radiusMeters}
+          onLocationChange={handleLocationChange}
+          onRadiusChange={handleRadiusChange}
+        />
       </div>
       <div className="flex flex-col sm:flex-row gap-2 justify-end">
         <button
