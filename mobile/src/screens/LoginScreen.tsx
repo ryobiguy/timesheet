@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -8,14 +8,63 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../contexts/AuthContext'
+
+const REMEMBERED_EMAIL_KEY = 'rememberedEmail'
+const REMEMBERED_COMPANY_CODE_KEY = 'rememberedCompanyCode'
 
 export function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [companyCode, setCompanyCode] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
+
+  // Load remembered email and company code on mount
+  useEffect(() => {
+    loadRememberedCredentials()
+  }, [])
+
+  const loadRememberedCredentials = async () => {
+    try {
+      const [savedEmail, savedCompanyCode] = await Promise.all([
+        AsyncStorage.getItem(REMEMBERED_EMAIL_KEY),
+        AsyncStorage.getItem(REMEMBERED_COMPANY_CODE_KEY),
+      ])
+      
+      if (savedEmail) {
+        setEmail(savedEmail)
+        setRememberMe(true)
+      }
+      if (savedCompanyCode) {
+        setCompanyCode(savedCompanyCode)
+        setRememberMe(true)
+      }
+    } catch (error) {
+      console.error('Failed to load remembered credentials:', error)
+    }
+  }
+
+  const saveRememberedCredentials = async (email: string, companyCode: string) => {
+    try {
+      await AsyncStorage.multiSet([
+        [REMEMBERED_EMAIL_KEY, email],
+        [REMEMBERED_COMPANY_CODE_KEY, companyCode],
+      ])
+    } catch (error) {
+      console.error('Failed to save remembered credentials:', error)
+    }
+  }
+
+  const clearRememberedCredentials = async () => {
+    try {
+      await AsyncStorage.multiRemove([REMEMBERED_EMAIL_KEY, REMEMBERED_COMPANY_CODE_KEY])
+    } catch (error) {
+      console.error('Failed to clear remembered credentials:', error)
+    }
+  }
 
   const handleLogin = async () => {
     if (!email || !password || !companyCode) {
@@ -31,6 +80,13 @@ export function LoginScreen() {
     setIsLoading(true)
     try {
       await login(email, password, companyCode)
+      
+      // Save credentials if remember me is checked
+      if (rememberMe) {
+        await saveRememberedCredentials(email, companyCode)
+      } else {
+        await clearRememberedCredentials()
+      }
     } catch (error: any) {
       console.error('Login error:', error)
       const errorMessage = error?.message || 'Invalid credentials'
@@ -79,6 +135,17 @@ export function LoginScreen() {
             autoCapitalize="none"
             autoComplete="password"
           />
+
+          <TouchableOpacity
+            style={styles.checkboxContainer}
+            onPress={() => setRememberMe(!rememberMe)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+              {rememberMe && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+            <Text style={styles.checkboxLabel}>Remember my email and company code</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.button, isLoading === true && styles.buttonDisabled]}
@@ -152,5 +219,35 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#cbd5e1',
+    borderRadius: 4,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  checkboxChecked: {
+    backgroundColor: '#0ea5e9',
+    borderColor: '#0ea5e9',
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: '#475569',
+    flex: 1,
   },
 })
