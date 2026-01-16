@@ -364,8 +364,11 @@ function TimeEntryCard({
   formatDate: (dateString: string) => string
   formatTime: (dateString: string) => string
 }) {
-  const meta = entry._meta || {}
+  const meta = entry._meta
   const isPending = entry.status === 'PENDING'
+  const geofenceVerified = meta?.geofenceVerified ?? false
+  const hasGeofenceEvents = meta?.hasGeofenceEvents ?? false
+  const isManualEdit = meta?.isManualEdit ?? false
 
   return (
     <div className="py-4 border-b border-slate-200 last:border-0">
@@ -386,22 +389,22 @@ function TimeEntryCard({
           <p className="mt-1 text-xs text-slate-500">{entry.jobsite?.address}</p>
           {/* Trust Signals */}
           <div className="flex gap-2 mt-2 flex-wrap">
-            {meta.geofenceVerified && (
+            {geofenceVerified && (
               <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                 <span>✔</span> Geofence verified
               </span>
             )}
-            {meta.hasGeofenceEvents && !meta.geofenceVerified && (
+            {hasGeofenceEvents && !geofenceVerified && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
                 <span>⚠</span> Partial geofence data
               </span>
             )}
-            {!meta.hasGeofenceEvents && (
+            {!hasGeofenceEvents && (
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                 <span>📍</span> No geofence data
               </span>
             )}
-            {meta.isManualEdit && (
+            {isManualEdit && (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
                 <span>⏱</span> Manual edit
               </span>
@@ -483,7 +486,7 @@ function TimeEntryCard({
             <div>
               <h4 className="text-sm font-semibold text-slate-900 mb-2">Verification</h4>
               <div className="space-y-1 text-sm text-slate-600">
-                <p>Geofence events: {meta.eventCount || 0}</p>
+                <p>Geofence events: {meta?.eventCount || 0}</p>
                 <p>Created: {new Date(entry.createdAt).toLocaleString()}</p>
                 {entry.modifiedBy && (
                   <p className="text-amber-600">Modified by supervisor</p>
