@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
+import { timeEntriesApi } from '../lib/api'
 
 const navItems = [
   { label: 'Overview', path: '/dashboard' },
   { label: 'Jobsites', path: 'jobsites' },
   { label: 'Live Roster', path: 'roster' },
-  { label: 'Approvals', path: 'approvals' },
+  { label: 'Approvals', path: 'approvals', showBadge: true },
   { label: 'Summaries', path: 'summaries' },
   { label: 'Disputes', path: 'disputes' },
   { label: 'Users', path: 'users' },
@@ -19,6 +21,14 @@ export function DashboardLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Get pending approvals count for badge
+  const { data: pendingData } = useQuery({
+    queryKey: ['time-entries', 'pending-count'],
+    queryFn: () => timeEntriesApi.list({ status: 'PENDING', limit: 1 }),
+    refetchInterval: 30000, // Refetch every 30 seconds
+  })
+  const pendingCount = pendingData?.data?.length || 0
 
   // Prevent body scroll when sidebar is open on mobile
   useEffect(() => {
@@ -90,23 +100,31 @@ export function DashboardLayout() {
             className={`hidden lg:block lg:sticky lg:top-0 h-fit w-[220px] rounded-2xl border border-slate-200 bg-white p-4 shadow-sm`}
           >
             <nav className="space-y-2">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  end={item.path === '/dashboard'}
-                  className={({ isActive }) =>
-                    [
-                      'block rounded-xl px-4 py-3 text-sm font-medium transition',
-                      isActive
-                        ? 'bg-sky-50 text-sky-600 border border-sky-200'
-                        : 'text-slate-600 hover:bg-slate-50',
-                    ].join(' ')
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              ))}
+              {navItems.map((item) => {
+                const showBadge = item.showBadge && pendingCount > 0
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    end={item.path === '/dashboard'}
+                    className={({ isActive }) =>
+                      [
+                        'block rounded-xl px-4 py-3 text-sm font-medium transition relative',
+                        isActive
+                          ? 'bg-sky-50 text-sky-600 border border-sky-200'
+                          : 'text-slate-600 hover:bg-slate-50',
+                      ].join(' ')
+                    }
+                  >
+                    {item.label}
+                    {showBadge && (
+                      <span className="ml-2 inline-flex items-center justify-center rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">
+                        {pendingCount > 99 ? '99+' : pendingCount}
+                      </span>
+                    )}
+                  </NavLink>
+                )
+              })}
             </nav>
           </aside>
 
@@ -117,24 +135,32 @@ export function DashboardLayout() {
             }`}
           >
             <nav className="space-y-2 overflow-y-auto h-full pb-8">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  end={item.path === '/dashboard'}
-                  onClick={() => setSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    [
-                      'block rounded-xl px-4 py-3 text-sm font-medium transition',
-                      isActive
-                        ? 'bg-sky-50 text-sky-600 border border-sky-200'
-                        : 'text-slate-600 hover:bg-slate-50',
-                    ].join(' ')
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              ))}
+              {navItems.map((item) => {
+                const showBadge = item.showBadge && pendingCount > 0
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    end={item.path === '/dashboard'}
+                    onClick={() => setSidebarOpen(false)}
+                    className={({ isActive }) =>
+                      [
+                        'block rounded-xl px-4 py-3 text-sm font-medium transition relative',
+                        isActive
+                          ? 'bg-sky-50 text-sky-600 border border-sky-200'
+                          : 'text-slate-600 hover:bg-slate-50',
+                      ].join(' ')
+                    }
+                  >
+                    {item.label}
+                    {showBadge && (
+                      <span className="ml-2 inline-flex items-center justify-center rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">
+                        {pendingCount > 99 ? '99+' : pendingCount}
+                      </span>
+                    )}
+                  </NavLink>
+                )
+              })}
             </nav>
           </aside>
 

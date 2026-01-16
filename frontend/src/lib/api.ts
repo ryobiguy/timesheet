@@ -52,12 +52,21 @@ export interface TimeEntry {
     id: string
     name: string
     address: string
+    latitude?: number
+    longitude?: number
+    radiusMeters?: number
   }
   disputes?: Array<{
     id: string
     reason: string
     createdAt: string
   }>
+  _meta?: {
+    geofenceVerified: boolean
+    hasGeofenceEvents: boolean
+    isManualEdit: boolean
+    eventCount: number
+  }
 }
 
 export interface CreateJobsiteInput {

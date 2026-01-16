@@ -71,7 +71,10 @@ router.get(
             select: {
               id: true,
               name: true,
-              address: true
+              address: true,
+              latitude: true,
+              longitude: true,
+              radiusMeters: true
             }
           },
           _count: {
@@ -84,8 +87,51 @@ router.get(
       prisma.timeEntry.count({ where })
     ])
 
+    // Enrich entries with geofence verification data
+    const enrichedEntries = await Promise.all(
+      entries.map(async (entry) => {
+        // Parse createdFromEvents to get geofence event IDs
+        let eventIds: string[] = []
+        try {
+          const eventsStr = entry.createdFromEvents
+          if (eventsStr && typeof eventsStr === 'string') {
+            eventIds = JSON.parse(eventsStr)
+          } else if (Array.isArray(eventsStr)) {
+            eventIds = eventsStr
+          }
+        } catch {
+          // Invalid JSON, treat as empty
+        }
+
+        // Check if entry was manually modified
+        const isManualEdit = !!entry.modifiedBy
+
+        // Get geofence events if they exist
+        let geofenceVerified = false
+        let hasGeofenceEvents = false
+        if (eventIds.length > 0) {
+          const events = await prisma.geofenceEvent.findMany({
+            where: { id: { in: eventIds } },
+            select: { id: true, type: true, timestamp: true, accuracy: true }
+          })
+          hasGeofenceEvents = events.length > 0
+          geofenceVerified = events.length >= 2 && events.some(e => e.type === 'ENTER') && events.some(e => e.type === 'EXIT')
+        }
+
+        return {
+          ...entry,
+          _meta: {
+            geofenceVerified,
+            hasGeofenceEvents,
+            isManualEdit,
+            eventCount: eventIds.length
+          }
+        }
+      })
+    )
+
     res.json({
-      data: entries,
+      data: enrichedEntries,
       pagination: {
         total,
         limit,
