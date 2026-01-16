@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  SafeAreaView,
+  Platform,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../contexts/AuthContext'
@@ -122,13 +124,14 @@ export function HomeScreen() {
   }
 
   return (
-    <ScrollView 
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-      }
-    >
-      <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView 
+        style={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+        }
+      >
+        <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Welcome back,</Text>
           <Text style={styles.name}>{user?.name}</Text>
@@ -216,11 +219,16 @@ export function HomeScreen() {
           ))
         )}
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
@@ -240,6 +248,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
+    paddingTop: Platform.OS === 'ios' ? 20 : 24,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
