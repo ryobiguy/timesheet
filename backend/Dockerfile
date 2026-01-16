@@ -21,5 +21,5 @@ RUN npm run build
 # Expose port
 EXPOSE 5001
 
-# Start the server (create schema if it doesn't exist)
-CMD ["sh", "-c", "if [ -n \"$DATABASE_URL\" ]; then npx prisma db push --accept-data-loss --skip-generate; fi && npm run start"]
+# Start the server (create schema if it doesn't exist, then backfill company codes)
+CMD ["sh", "-c", "if [ -n \"$DATABASE_URL\" ]; then npx prisma db push --accept-data-loss --skip-generate && npx tsx scripts/backfill-company-codes.ts || true; fi && npm run start"]

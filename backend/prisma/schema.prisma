@@ -13,7 +13,7 @@ datasource db {
 model Organization {
   id                 String   @id @default(cuid())
   name               String
-  companyCode        String   @unique // 6-digit unique code
+  companyCode        String?  @unique // 6-digit unique code (nullable for migration)
   subscriptionTier   String   @default("free")
   stripeCustomerId   String?
   stripeSubscriptionId String?
