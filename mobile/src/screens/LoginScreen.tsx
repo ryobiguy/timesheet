@@ -13,18 +13,24 @@ import { useAuth } from '../contexts/AuthContext'
 export function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [companyCode, setCompanyCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password')
+    if (!email || !password || !companyCode) {
+      Alert.alert('Error', 'Please enter email, password, and company code')
+      return
+    }
+
+    if (!/^\d{6}$/.test(companyCode)) {
+      Alert.alert('Error', 'Company code must be 6 digits')
       return
     }
 
     setIsLoading(true)
     try {
-      await login(email, password)
+      await login(email, password, companyCode)
     } catch (error: any) {
       console.error('Login error:', error)
       const errorMessage = error?.message || 'Invalid credentials'
@@ -44,6 +50,16 @@ export function LoginScreen() {
         <Text style={styles.subtitle}>Worker Timesheet App</Text>
 
         <View style={styles.form}>
+          <TextInput
+            style={styles.input}
+            placeholder="Company Code (6 digits)"
+            value={companyCode}
+            onChangeText={setCompanyCode}
+            keyboardType="number-pad"
+            maxLength={6}
+            autoCapitalize="none"
+          />
+
           <TextInput
             style={styles.input}
             placeholder="Email"

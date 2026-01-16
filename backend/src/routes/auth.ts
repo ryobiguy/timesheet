@@ -73,7 +73,7 @@ router.post(
   '/login',
   validateBody(loginSchema),
   async (req: Request, res: Response) => {
-    const { email, password } = req.body
+    const { email, password, companyCode } = req.body
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -81,7 +81,8 @@ router.post(
         org: {
           select: {
             id: true,
-            name: true
+            name: true,
+            companyCode: true
           }
         }
       }
@@ -91,6 +92,14 @@ router.post(
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'Invalid email or password'
+      })
+    }
+
+    // Verify company code matches user's organization
+    if (user.org?.companyCode !== companyCode) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Invalid company code'
       })
     }
 

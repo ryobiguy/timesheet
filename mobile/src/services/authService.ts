@@ -19,11 +19,12 @@ export interface AuthResponse {
 }
 
 export const authService = {
-  async login(email: string, password: string): Promise<AuthResponse> {
+  async login(email: string, password: string, companyCode: string): Promise<AuthResponse> {
     try {
       const response = await api.post<{ data: AuthResponse }>('/api/auth/login', {
         email,
         password,
+        companyCode,
       })
       
       const { user, token } = response.data?.data || response.data
