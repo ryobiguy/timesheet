@@ -1,5 +1,5 @@
-import React from 'react'
-import { NavigationContainer } from '@react-navigation/native'
+import React, { useEffect, useRef } from 'react'
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { AuthProvider, useAuth } from './src/contexts/AuthContext'
 import { LoginScreen } from './src/screens/LoginScreen'
@@ -11,6 +11,23 @@ const Stack = createNativeStackNavigator()
 
 function AppNavigator() {
   const { user, isLoading } = useAuth()
+  const navigationRef = useRef<NavigationContainerRef<any>>(null)
+
+  useEffect(() => {
+    if (!isLoading && navigationRef.current) {
+      if (user) {
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        })
+      } else {
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        })
+      }
+    }
+  }, [user, isLoading])
 
   if (isLoading === true) {
     return (
@@ -24,7 +41,7 @@ function AppNavigator() {
   const initialRoute = user ? "Home" : "Login"
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator 
         screenOptions={{ headerShown: false }}
         initialRouteName={initialRoute}
