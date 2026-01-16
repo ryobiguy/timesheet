@@ -10,7 +10,9 @@ import {
   RefreshControl,
   SafeAreaView,
   Platform,
+  StatusBar,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../contexts/AuthContext'
 import { GeofenceTracker } from '../services/geofenceService'
@@ -20,6 +22,7 @@ import { timeEntryService, type TimeEntry } from '../services/timeEntryService'
 export function HomeScreen() {
   const { user, logout } = useAuth()
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [activeEntry, setActiveEntry] = useState<TimeEntry | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -124,14 +127,15 @@ export function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <ScrollView 
         style={styles.container}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
         }
       >
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) + 8 }]}>
         <View>
           <Text style={styles.greeting}>Welcome back,</Text>
           <Text style={styles.name}>{user?.name}</Text>
@@ -248,7 +252,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    paddingTop: Platform.OS === 'ios' ? 20 : 24,
+    paddingBottom: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
