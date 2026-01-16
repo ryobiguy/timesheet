@@ -1,4 +1,4 @@
-import { Router, type Response } from 'express'
+import { Router, type Request, type Response } from 'express'
 import { prisma } from '../lib/prisma'
 import {
   createTimeEntrySchema,
