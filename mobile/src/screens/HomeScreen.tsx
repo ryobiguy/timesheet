@@ -20,6 +20,7 @@ export function HomeScreen() {
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [activeEntry, setActiveEntry] = useState<TimeEntry | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [isTracking, setIsTracking] = useState(false)
   const [tracker, setTracker] = useState<GeofenceTracker | null>(null)
   const canApprove = user?.role === 'ADMIN' || user?.role === 'SUPERVISOR'
@@ -35,10 +36,17 @@ export function HomeScreen() {
     }
   }, [user?.id])
 
-  const loadData = async () => {
+  const loadData = async (isRefresh = false) => {
     if (!user) {
       setIsLoading(false)
+      setIsRefreshing(false)
       return
+    }
+
+    if (isRefresh) {
+      setIsRefreshing(true)
+    } else {
+      setIsLoading(true)
     }
 
     try {
@@ -49,24 +57,33 @@ export function HomeScreen() {
       setAssignments(assignmentsData)
       setActiveEntry(activeEntryData)
 
-      // Initialize tracker
-      const newTracker = new GeofenceTracker(user.id)
-      newTracker.setJobsites(assignmentsData.map((a) => a.jobsite))
-      newTracker.setOnEventCallback((event) => {
-        Alert.alert(
-          event.type === 'ENTER' ? 'Clocked In' : 'Clocked Out',
-          `Jobsite: ${assignmentsData.find((a) => a.jobsiteId === event.jobsiteId)?.jobsite.name || 'Unknown'}`
-        )
-        // Reload active entry
-        timeEntryService.getActiveTimeEntry(user.id).then(setActiveEntry).catch(console.error)
-      })
-      setTracker(newTracker)
+      // Initialize or update tracker with new jobsites
+      if (tracker) {
+        tracker.setJobsites(assignmentsData.map((a) => a.jobsite))
+      } else {
+        const newTracker = new GeofenceTracker(user.id)
+        newTracker.setJobsites(assignmentsData.map((a) => a.jobsite))
+        newTracker.setOnEventCallback((event) => {
+          Alert.alert(
+            event.type === 'ENTER' ? 'Clocked In' : 'Clocked Out',
+            `Jobsite: ${assignmentsData.find((a) => a.jobsiteId === event.jobsiteId)?.jobsite.name || 'Unknown'}`
+          )
+          // Reload active entry
+          timeEntryService.getActiveTimeEntry(user.id).then(setActiveEntry).catch(console.error)
+        })
+        setTracker(newTracker)
+      }
     } catch (error: any) {
       console.error('Load data error:', error)
       Alert.alert('Error', error?.response?.data?.message || error.message || 'Failed to load data')
     } finally {
       setIsLoading(false)
+      setIsRefreshing(false)
     }
+  }
+
+  const handleRefresh = () => {
+    loadData(true)
   }
 
   const toggleTracking = async () => {
@@ -104,15 +121,31 @@ export function HomeScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+      }
+    >
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Welcome back,</Text>
           <Text style={styles.name}>{user?.name}</Text>
         </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            onPress={handleRefresh} 
+            style={styles.refreshButton}
+            disabled={isRefreshing}
+          >
+            <Text style={styles.refreshButtonText}>
+              {isRefreshing ? '...' : '↻'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Status Card */}
@@ -218,6 +251,21 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#0f172a',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  refreshButton: {
+    padding: 8,
+    minWidth: 40,
+    alignItems: 'center',
+  },
+  refreshButtonText: {
+    fontSize: 20,
+    color: '#0ea5e9',
+    fontWeight: '600',
   },
   logoutButton: {
     padding: 8,
