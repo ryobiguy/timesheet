@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { AuthProvider, useAuth } from './src/contexts/AuthContext'
 import { LoginScreen } from './src/screens/LoginScreen'
 import { HomeScreen } from './src/screens/HomeScreen'
+import { ApprovalsScreen } from './src/screens/ApprovalsScreen'
 import { ErrorBoundary } from './src/components/ErrorBoundary'
 import { View, Text, StyleSheet, StatusBar as RNStatusBar, ActivityIndicator } from 'react-native'
 
@@ -48,6 +49,7 @@ function AppNavigator() {
       >
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Approvals" component={ApprovalsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   )

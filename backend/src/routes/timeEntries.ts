@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from 'express'
+import { Router, type Response } from 'express'
 import { prisma } from '../lib/prisma'
 import {
   createTimeEntrySchema,
@@ -7,6 +7,7 @@ import {
   timeEntryQuerySchema
 } from '../validators/timeEntries'
 import { validateBody, validateParams } from '../middleware/validate'
+import { requireAuth, requireRole, type AuthRequest } from '../middleware/auth'
 
 const router = Router()
 
@@ -191,9 +192,10 @@ router.post(
 // PUT /api/time-entries/:id - Update time entry
 router.put(
   '/:id',
+  requireAuth,
   validateParams(timeEntryParamsSchema),
   validateBody(updateTimeEntrySchema),
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const { id } = req.params
     const updateData: any = { ...req.body }
 

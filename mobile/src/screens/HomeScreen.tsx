@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../contexts/AuthContext'
 import { GeofenceTracker } from '../services/geofenceService'
 import { jobsiteService, type Assignment } from '../services/jobsiteService'
@@ -15,11 +16,13 @@ import { timeEntryService, type TimeEntry } from '../services/timeEntryService'
 
 export function HomeScreen() {
   const { user, logout } = useAuth()
+  const navigation = useNavigation()
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [activeEntry, setActiveEntry] = useState<TimeEntry | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isTracking, setIsTracking] = useState(false)
   const [tracker, setTracker] = useState<GeofenceTracker | null>(null)
+  const canApprove = user?.role === 'ADMIN' || user?.role === 'SUPERVISOR'
 
   useEffect(() => {
     if (user) {
@@ -140,6 +143,20 @@ export function HomeScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Approvals Card (Admin/Supervisor only) */}
+      {canApprove && (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Approvals</Text>
+          <TouchableOpacity
+            style={styles.approvalsButton}
+            onPress={() => navigation.navigate('Approvals' as never)}
+          >
+            <Text style={styles.approvalsButtonText}>Review Pending Approvals</Text>
+            <Text style={styles.approvalsButtonSubtext}>Approve or dispute time entries</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Assigned Jobsites */}
       <View style={styles.card}>
@@ -317,5 +334,23 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     textAlign: 'center',
     padding: 20,
+  },
+  approvalsButton: {
+    backgroundColor: '#f0f9ff',
+    borderWidth: 1,
+    borderColor: '#0ea5e9',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  approvalsButtonText: {
+    color: '#0ea5e9',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  approvalsButtonSubtext: {
+    color: '#64748b',
+    fontSize: 12,
   },
 })
