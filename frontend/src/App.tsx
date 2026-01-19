@@ -15,6 +15,8 @@ import { RegisterPage } from './pages/RegisterPage'
 import { ClockInOutPage } from './pages/ClockInOutPage'
 import { LandingPage } from './pages/LandingPage'
 import { CompanySignupPage } from './pages/CompanySignupPage'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 
 export function App() {
   return (
@@ -24,6 +26,8 @@ export function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/signup" element={<CompanySignupPage />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<TermsOfService />} />
       
