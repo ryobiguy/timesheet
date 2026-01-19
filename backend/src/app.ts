@@ -34,9 +34,10 @@ export function createApp(logger: Logger) {
   app.use(express.urlencoded({ extended: true, limit: '10mb' }))
   // CORS configuration
   const frontendUrl = process.env.FRONTEND_URL
+  const isProduction = process.env.NODE_ENV === 'production'
   const allowedOrigins = frontendUrl 
     ? [frontendUrl, frontendUrl.replace(/\/$/, '')] // Include with and without trailing slash
-    : (process.env.NODE_ENV === 'production' 
+    : (isProduction 
         ? ['https://timesheet-one-beta.vercel.app'] // Default production frontend
         : ['http://localhost:5175', 'http://localhost:5173'])
   
@@ -45,16 +46,19 @@ export function createApp(logger: Logger) {
       // Allow requests with no origin (mobile apps, Postman, etc.)
       if (!origin) return callback(null, true)
       
-      // Check if origin matches any allowed origin
-      const isAllowed = allowedOrigins.some(allowed => 
-        origin === allowed || origin.startsWith(allowed)
-      )
-      
-      if (isAllowed || process.env.NODE_ENV === 'development') {
-        callback(null, true)
+      // In production, strictly enforce allowed origins
+      if (isProduction) {
+        const isAllowed = allowedOrigins.some(allowed => 
+          origin === allowed || origin.startsWith(allowed)
+        )
+        if (isAllowed) {
+          callback(null, true)
+        } else {
+          logger.warn({ origin, allowedOrigins }, 'CORS: Blocked origin in production')
+          callback(new Error('Not allowed by CORS'))
+        }
       } else {
-        console.warn(`CORS: Origin ${origin} not in allowed list: ${allowedOrigins.join(', ')}`)
-        // Still allow for now to debug - remove in production
+        // In development, allow all origins for easier testing
         callback(null, true)
       }
     },
