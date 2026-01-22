@@ -53,11 +53,13 @@ router.get(
     const { orgId, role, search, limit, offset } = query.data
     const user = req.user!
 
-    // Non-admins can only see users from their own organization
-    const filterOrgId = user.role === 'ADMIN' ? orgId : user.orgId
+    // Always filter by organization - admins can optionally filter by a different orgId,
+    // but if not provided, they only see their own organization's users
+    const filterOrgId = user.role === 'ADMIN' && orgId ? orgId : user.orgId
 
-    const where: any = {}
-    if (filterOrgId) where.orgId = filterOrgId
+    const where: any = {
+      orgId: filterOrgId // Always filter by organization for security
+    }
     if (role) where.role = role
     if (search) {
       // SQLite doesn't support case-insensitive mode, so we'll do case-sensitive search
@@ -187,8 +189,8 @@ router.get(
       })
     }
 
-    // Non-admins can only view users from their own organization
-    if (user.role !== 'ADMIN' && targetUser.orgId !== user.orgId) {
+    // All users (including admins) can only view users from their own organization
+    if (targetUser.orgId !== user.orgId) {
       return res.status(403).json({
         error: 'Forbidden',
         message: 'You can only view users from your organization'
@@ -218,6 +220,14 @@ router.put(
       return res.status(404).json({
         error: 'Not found',
         message: 'User not found'
+      })
+    }
+
+    // Ensure admin can only update users from their own organization
+    if (existingUser.orgId !== user.orgId) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You can only update users from your organization'
       })
     }
 
@@ -273,12 +283,21 @@ router.delete(
       })
     }
 
+    const authUser = (req as AuthRequest).user!
+
     // Prevent deleting yourself
-    const authUser = (req as AuthRequest).user
-    if (authUser && authUser.id === id) {
+    if (authUser.id === id) {
       return res.status(400).json({
         error: 'Bad request',
         message: 'You cannot delete your own account'
+      })
+    }
+
+    // Ensure admin can only delete users from their own organization
+    if (user.orgId !== authUser.orgId) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You can only delete users from your organization'
       })
     }
 
@@ -309,6 +328,16 @@ router.post(
       return res.status(404).json({
         error: 'Not found',
         message: 'User not found'
+      })
+    }
+
+    const authUser = (req as AuthRequest).user!
+
+    // Ensure admin can only reset passwords for users from their own organization
+    if (user.orgId !== authUser.orgId) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You can only reset passwords for users from your organization'
       })
     }
 
