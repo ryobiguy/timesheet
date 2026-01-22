@@ -28,8 +28,6 @@ export function App() {
       <Route path="/signup" element={<CompanySignupPage />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<TermsOfService />} />
-      <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/terms" element={<TermsOfService />} />
       
       {/* Protected dashboard routes */}
       <Route

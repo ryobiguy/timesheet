@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, ReactNode } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
@@ -17,7 +17,11 @@ const navItems = [
   { label: 'Clock In/Out', path: 'clock' },
 ]
 
-export function DashboardLayout() {
+interface DashboardLayoutProps {
+  children?: ReactNode
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps = {}) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -166,7 +170,7 @@ export function DashboardLayout() {
 
           {/* Main Content - Full width on mobile */}
           <main className="flex-1 space-y-6 min-w-0 w-full">
-            <Outlet />
+            {children ? children : <Outlet />}
           </main>
         </div>
       </div>
