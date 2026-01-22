@@ -109,6 +109,7 @@ export function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="Company Code (6 digits)"
+            placeholderTextColor="#94a3b8"
             value={companyCode}
             onChangeText={setCompanyCode}
             keyboardType="number-pad"
@@ -119,6 +120,7 @@ export function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="Email"
+            placeholderTextColor="#94a3b8"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -129,6 +131,7 @@ export function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="Password"
+            placeholderTextColor="#94a3b8"
             value={password}
             onChangeText={setPassword}
             secureTextEntry={Boolean(true)}
@@ -204,6 +207,8 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     backgroundColor: '#fff',
+    color: '#0f172a', // Explicit text color for production builds
+    placeholderTextColor: '#94a3b8', // Placeholder text color
   },
   button: {
     backgroundColor: '#0ea5e9',

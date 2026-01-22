@@ -2,7 +2,7 @@
   "expo": {
     "name": "Clockly",
     "slug": "clockly-mobile",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -13,6 +13,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.clockly.mobile",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Clockly needs your location to track when you enter and exit jobsites.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Clockly needs your location to automatically clock you in and out when you enter and exit jobsites.",
@@ -20,6 +21,8 @@
       }
     },
     "android": {
+      "package": "com.clockly.mobile",
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -32,6 +35,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "df1c8200-b651-478c-b864-77ee4e897f5a"
+      }
     }
   }
 }
