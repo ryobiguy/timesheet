@@ -20,6 +20,7 @@ export interface AuthResponse {
 export interface LoginInput {
   email: string
   password: string
+  companyCode?: string
 }
 
 export interface RegisterInput {

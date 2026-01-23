@@ -4,7 +4,7 @@ import { authApi, type User, type RegisterInput } from '../lib/authApi'
 interface AuthContextType {
   user: User | null
   token: string | null
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string, companyCode?: string) => Promise<void>
   register: (data: RegisterInput) => Promise<void>
   companySignup: (data: { organizationName: string; adminName: string; adminEmail: string; adminPassword: string; subscriptionTier: string }) => Promise<void>
   logout: () => void
@@ -30,8 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string) => {
-    const response = await authApi.login({ email, password })
+  const login = async (email: string, password: string, companyCode?: string) => {
+    const response = await authApi.login({ email, password, companyCode })
     const { user, token } = response.data
     
     localStorage.setItem('token', token)

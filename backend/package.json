@@ -9,7 +9,8 @@
         "start": "node --experimental-specifier-resolution=node dist/server.js",
         "lint": "eslint . --ext ts",
         "seed": "tsx scripts/seed.ts",
-        "create-assignment": "tsx scripts/create-assignment.ts"
+        "create-assignment": "tsx scripts/create-assignment.ts",
+        "cleanup": "tsx scripts/cleanup-database.ts"
     },
     "dependencies": {
         "@types/pdfkit": "^0.17.4",

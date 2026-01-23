@@ -95,8 +95,8 @@ router.post(
       })
     }
 
-    // Verify company code matches user's organization
-    if (user.org?.companyCode !== companyCode) {
+    // Verify company code matches user's organization (only if provided - for mobile app)
+    if (companyCode && user.org?.companyCode !== companyCode) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'Invalid company code'

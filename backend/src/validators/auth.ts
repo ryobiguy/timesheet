@@ -11,7 +11,7 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
-  companyCode: z.string().regex(/^\d{6}$/, 'Company code must be 6 digits')
+  companyCode: z.string().regex(/^\d{6}$/, 'Company code must be 6 digits').optional()
 })
 
 export type RegisterInput = z.infer<typeof registerSchema>
