@@ -53,9 +53,13 @@ router.get(
     const { orgId, role, search, limit, offset } = query.data
     const user = req.user!
 
-    // Always filter by organization - admins can optionally filter by a different orgId,
+    // SECURITY: Always filter by organization - admins can optionally filter by a different orgId,
     // but if not provided, they only see their own organization's users
+    // IMPORTANT: Never allow cross-organization access unless explicitly requested by admin
     const filterOrgId = user.role === 'ADMIN' && orgId ? orgId : user.orgId
+
+    // Log for debugging (remove in production if needed)
+    console.log(`[Users API] User ${user.email} (orgId: ${user.orgId}, role: ${user.role}) requesting users. Filter orgId: ${filterOrgId}`)
 
     const where: any = {
       orgId: filterOrgId // Always filter by organization for security
@@ -211,6 +215,7 @@ router.put(
   async (req: AuthRequest, res: Response) => {
     const { id } = req.params
     const updateData = req.body
+    const user = req.user!
 
     const existingUser = await prisma.user.findUnique({
       where: { id }
